@@ -1,0 +1,10 @@
+Sub CrearCopiasArchivo()
+
+  celda = InputBox("Primera celda")
+  Range(celda).Select
+  Do While ActiveCell.Value <> ""
+    ThisWorkbook.SaveAs ThisWorkbook.Path & "\" & ActiveCell.Value
+    ActiveCell.Offset(1, 0).Select
+  Loop
+
+End Sub
