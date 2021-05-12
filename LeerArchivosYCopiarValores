@@ -1,0 +1,134 @@
+'@utor Hector Andres Chabur Tabares
+'Celular: 3184246820
+Sub Fusionar()
+
+    'UpdatebyExtendoffice20180205
+    Dim ai As Integer
+    ai = 1
+    '**************************************
+    If ai = 1 Then
+        Application.DisplayAlerts = False
+        'xxxxxxxxxxxxxxxxxxxxx
+        Dim strDirectory As String
+        With Application.FileDialog(msoFileDialogFolderPicker)
+            .InitialFileName = Application.DefaultFilePath & "\"
+            .Title = "Select Carpeta"
+            .Show
+        
+        If .SelectedItems.Count = 0 Then
+                Exit Sub
+            End If
+            strDirectory = .SelectedItems(1)
+        End With
+        '**************************************
+        Worksheets.Add Sheets(1)
+        ActiveSheet.Name = "Combined"
+        'Meter en funcion mostrarSubcarpetas
+        'Algoritmo leer hojas y copiar valores de un rango de celdas a una hoja nombrada combined
+        valorFinal = leerArchivosYCopiarValores(strDirectory, 1, 0)
+        hacerTodasLasHojasVisibles
+    End If
+    '**************************************
+    If ai = 2 Then
+        hacerTodasLasHojasVisibles
+    End If
+    '**************************************
+    Application.CutCopyMode = False
+    
+End Sub
+
+Public Function leerArchivosYCopiarValores(strDirectory, subnivel, nuevoContador) As Integer
+    
+    Dim objFSO As Object
+    Dim objFolders As Object
+    Dim objFolder As Object
+    Dim arrFolders() As String
+    Dim FolderCount As Long
+    Dim FolderIndex As Long
+    
+    Set objFSO = CreateObject("Scripting.FileSystemObject")
+    Set objFolders = objFSO.GetFolder(strDirectory).SubFolders
+    
+    If Not IsNull(objFolders) Then
+        FolderCount = objFolders.Count
+        '**************************************
+        If FolderCount > 0 Then
+            ReDim arrFolders(1 To FolderCount)
+            FolderIndex = 0
+            subnivel = subnivel + 1
+            '**************************************
+            For Each objFolder In objFolders
+                FolderIndex = FolderIndex + 1
+                arrFolders(FolderIndex) = objFolder.Name
+                'Ingresar y volver a ejecutar el mostrarSubcarpetas
+                strDirectoryInside = strDirectory & "\" & objFolder.Name
+                leerArchivosYCopiarValores = leerArchivosYCopiarValores(strDirectoryInside, subnivel, nuevoContador)
+                nuevoContador = leerArchivosYCopiarValores
+            Next objFolder
+            '**************************************
+        Else
+            AX = ActiveWorkbook.Name
+            R = strDirectory
+            ChDir R & "\"
+            archi = Dir("*.xlsx")
+            'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+            'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+            Dim contador As Integer
+            contador = nuevoContador
+            Dim contadorGen As Integer
+            contadorGen = nuevoContador
+            On Error Resume Next
+            '**************************************
+            Do While archi <> ""
+                Workbooks.Open archi
+                B = ActiveWorkbook.Name
+                '**************************************
+                For Each Hoja In ActiveWorkbook.Sheets
+                    Hoja.Activate
+                    '**************************************
+                    If Hoja.Name = "(General)" Then
+                        copiarValoresDeUnaHojaAOtra = copiarValoresDeUnaHojaAOtra(AX, 1, Hoja, "$A$2", "$F$2", contadorGen, "A", "F")
+                        contadorGen = copiarValoresDeUnaHojaAOtra
+                    End If
+                    '**************************************
+                    If Hoja.Name = "(Recursos)" Then
+                        copiarValoresDeUnaHojaAOtra = copiarValoresDeUnaHojaAOtra(AX, 1, Hoja, "$A$2", "$F$2", contador, "A", "D")
+                        contador = copiarValoresDeUnaHojaAOtra
+                    End If
+                    '**************************************
+                Next
+                '**************************************
+                Workbooks(B).Close False
+                archi = Dir()
+            Loop
+            '**************************************
+            leerArchivosYCopiarValores = contador
+        End If
+        '**************************************
+    End If
+    '**************************************
+    Set objFSO = Nothing
+    Set objFolders = Nothing
+    Set objFolder = Nothing
+    
+End Function
+
+Public Function copiarValoresDeUnaHojaAOtra(nombreLibroPegar, numeroHojaLibroPegar, hojaCopiar, columnaInicialHojaCopiar, columnaFinalHojaCopiar, contador, columnaInicialHojaPegar, columnaFinalHojaPegar) As Integer
+    
+    Dim rangoEnELqueVoy As String
+    copiarValoresDeUnaHojaAOtra = contador + 1
+    rangoEnELqueVoy = columnaInicialHojaPegar & copiarValoresDeUnaHojaAOtra & ":" & columnaFinalHojaPegar & copiarValoresDeUnaHojaAOtra
+    Workbooks(nombreLibroPegar).Sheets(numeroHojaLibroPegar).Range(rangoEnELqueVoy).Value = hojaCopiar.Range(columnaInicialHojaCopiar & ":" & columnaFinalHojaCopiar).Value
+
+End Function
+
+Public Function hacerTodasLasHojasVisibles()
+    
+    Dim numero As Byte
+    Dim i As Byte
+    numero = Sheets.Count
+    For i = 1 To numero
+        Sheets(i).Visible = True
+    Next
+
+End Function
